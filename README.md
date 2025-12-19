@@ -11,15 +11,25 @@ This tool turns a natural-language DBA request into **Oracle SQL**, applies a **
 
 ## Configuration
 
-### 1) Install dependencies
+### 1) Create and use a virtual environment (recommended)
 
 From the repo root:
 
 ```bash
-python3 -m pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
 ```
 
-### 2) Set environment variables
+### 2) Install dependencies
+
+From the repo root:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### 3) Set environment variables
 
 You can export env vars directly, or store them in a local `.env` file and load it.
 
@@ -85,13 +95,13 @@ export NLDBA_ALLOW_DESTRUCTIVE=1
 Dry-run prints the plan and SQL but does **not** connect to Oracle:
 
 ```bash
-python3 nl_dba_executor.py "show blocking sessions"
+python nl_dba_executor.py "show blocking sessions"
 ```
 
 Or via module entrypoint:
 
 ```bash
-python3 -m nldba_executor "show blocking sessions"
+python -m nldba_executor "show blocking sessions"
 ```
 
 ### Execute against Oracle
@@ -99,7 +109,7 @@ python3 -m nldba_executor "show blocking sessions"
 Add `--execute` to run (requires Oracle env vars):
 
 ```bash
-python3 nl_dba_executor.py "show tablespace usage" --execute
+python nl_dba_executor.py "show tablespace usage" --execute
 ```
 
 If the safety policy requires confirmation, you’ll be prompted.
@@ -109,7 +119,7 @@ If the safety policy requires confirmation, you’ll be prompted.
 If confirmation would be required, `--no-confirm` will fail instead of prompting:
 
 ```bash
-python3 nl_dba_executor.py "drop user bob" --execute --no-confirm
+python nl_dba_executor.py "drop user bob" --execute --no-confirm
 ```
 
 ## Test & validation
@@ -119,21 +129,21 @@ There are no unit tests in this repo yet. Use the checks below as a validation c
 ### 1) Syntax/compile check
 
 ```bash
-python3 -m py_compile nl_dba_executor.py
-python3 -m py_compile nldba_executor/*.py
+python -m py_compile nl_dba_executor.py
+python -m py_compile nldba_executor/*.py
 ```
 
 ### 2) CLI help smoke test
 
 ```bash
-python3 nl_dba_executor.py --help
-python3 -m nldba_executor --help
+python nl_dba_executor.py --help
+python -m nldba_executor --help
 ```
 
 ### 3) Dry-run validation (no DB required)
 
 ```bash
-OPENAI_API_KEY=... python3 nl_dba_executor.py "list top 10 sessions by cpu"
+OPENAI_API_KEY=... python nl_dba_executor.py "list top 10 sessions by cpu"
 ```
 
 Confirm:
@@ -146,13 +156,19 @@ Confirm:
 Run a safe query first:
 
 ```bash
-python3 nl_dba_executor.py "select sysdate from dual" --execute
+python nl_dba_executor.py "select sysdate from dual" --execute
 ```
 
 Then try a slightly more complex read-only request:
 
 ```bash
-python3 nl_dba_executor.py "show current user and database name" --execute
+python nl_dba_executor.py "show current user and database name" --execute
+```
+
+### 6) Deactivate the virtual environment (optional)
+
+```bash
+deactivate
 ```
 
 ### 5) Log validation
