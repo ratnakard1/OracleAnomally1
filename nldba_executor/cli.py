@@ -1,3 +1,23 @@
+"""Command-line interface entrypoint.
+
+Flow:
+1) Parse args + read env
+2) Use OpenAI to generate a structured `Plan`
+3) Run local `policy_check` on the SQL
+4) Print the plan
+5) If --execute, optionally require user confirmation and execute against Oracle
+
+Required env:
+- OPENAI_API_KEY
+
+Oracle env (required only with --execute):
+- ORACLE_USER, ORACLE_PASSWORD, ORACLE_DSN
+
+Safety env:
+- NLDBA_READONLY=1
+- NLDBA_ALLOW_DESTRUCTIVE=1
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -14,6 +34,7 @@ from .policy import policy_check
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    """CLI main function. Returns a process exit code."""
     ap = argparse.ArgumentParser(description="Natural-language DBA command executor (Oracle + OpenAI)")
     ap.add_argument("request", help="Natural language request, e.g. 'show tablespace usage'")
     ap.add_argument("--model", default=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"), help="OpenAI model")
@@ -82,7 +103,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.no_confirm:
             print("\nConfirmation required but --no-confirm was set.", file=sys.stderr)
             return 4
-        if not prompt_confirm("\nThis action is high-risk. Type 'yes' to proceed [y/N]: "):
+        if not prompt_confirm("\nThis action is high-risk. Type 'yes' (or 'y') to proceed [y/yes/N]: "):
             print("Cancelled.")
             return 0
 

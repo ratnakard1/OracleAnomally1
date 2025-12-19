@@ -1,3 +1,16 @@
+"""Oracle execution layer.
+
+This module is responsible for:
+- establishing an Oracle connection via the `oracledb` driver
+- executing a SQL statement with optional bind variables
+- returning either a formatted table (for queries) or an OK message (for DDL/DML)
+
+Required env (only when executing):
+- ORACLE_USER
+- ORACLE_PASSWORD
+- ORACLE_DSN  (e.g. 'host:1521/service' or a TNS name)
+"""
+
 from __future__ import annotations
 
 import os
@@ -5,6 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 def _oracle_connect():
+    """Create an Oracle DB connection using env vars."""
     try:
         import oracledb  # type: ignore
     except Exception as e:  # pragma: no cover
@@ -28,6 +42,7 @@ def _oracle_connect():
 
 
 def _format_rows(columns: List[str], rows: List[Tuple[Any, ...]]) -> str:
+    """Render a simple fixed-width table for console output."""
     # Simple table renderer.
     srows = [["" if v is None else str(v) for v in r] for r in rows]
     widths = [len(c) for c in columns]
@@ -47,6 +62,17 @@ def _format_rows(columns: List[str], rows: List[Tuple[Any, ...]]) -> str:
 
 
 def execute_oracle_sql(sql: str, binds: Dict[str, Any], fetch: int) -> Tuple[str, Optional[str]]:
+    """Execute Oracle SQL and return (output, error).
+
+    Behavior:
+    - If the statement produces rows (cursor.description is set): fetch up to `fetch`
+      rows and return a formatted text table.
+    - Otherwise: commit and return an OK message.
+
+    Returns:
+    - (output, None) on success
+    - ("", error_message) on failure (attempts rollback)
+    """
     conn = _oracle_connect()
     try:
         cur = conn.cursor()

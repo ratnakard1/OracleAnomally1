@@ -1,3 +1,15 @@
+"""Local safety policy for generated SQL.
+
+This is the critical defense-in-depth layer:
+- Even if the model generates unsafe SQL, we scan and block/confirm locally.
+
+Policy knobs are controlled by the CLI via env vars:
+- NLDBA_READONLY=1
+  - Only allow SQL that starts with SELECT/WITH/EXPLAIN
+- NLDBA_ALLOW_DESTRUCTIVE=1
+  - Allow high-risk keywords like DROP/TRUNCATE/SHUTDOWN (but still confirm)
+"""
+
 from __future__ import annotations
 
 import re
@@ -31,6 +43,12 @@ CONFIRM_PATTERNS: List[Tuple[str, str]] = [
 
 
 def _normalize_sql_for_policy(sql: str) -> str:
+    """Normalize SQL for pattern scanning.
+
+    We do a *very* light normalization:
+    - replace string literals with a placeholder (reduce false positives)
+    - lowercase and collapse whitespace
+    """
     # Remove string literals to reduce false positives (very light-weight).
     sql2 = re.sub(r"'(?:''|[^'])*'", "'…'", sql)
     # Collapse whitespace, lowercase.
@@ -39,6 +57,13 @@ def _normalize_sql_for_policy(sql: str) -> str:
 
 
 def policy_check(plan: Plan, readonly: bool, allow_destructive: bool) -> PolicyDecision:
+    """Decide whether a plan is allowed to run and whether it needs confirmation.
+
+    Returns:
+    - PolicyDecision.allowed=False if blocked (e.g. readonly violation, destructive blocked)
+    - PolicyDecision.requires_confirmation=True if risky patterns are present
+      or if the model already flagged it as risky via Plan.requires_confirmation
+    """
     sqln = _normalize_sql_for_policy(plan.sql)
 
     red_flags: List[str] = []

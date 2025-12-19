@@ -1,3 +1,21 @@
+"""OpenAI integration: natural language -> structured Oracle SQL plan.
+
+This module is responsible ONLY for:
+- calling the OpenAI API
+- requesting a strict JSON object
+- validating/parsing that JSON into a `Plan`
+
+It is NOT responsible for:
+- enforcing safety rules (see `nldba_executor/policy.py`)
+- executing SQL (see `nldba_executor/oracle_exec.py`)
+
+Required env:
+- OPENAI_API_KEY
+
+Optional env:
+- OPENAI_MODEL (the CLI passes this as `model`)
+"""
+
 from __future__ import annotations
 
 import json
@@ -30,6 +48,7 @@ Rules:
 
 
 def _openai_client():
+    """Create an OpenAI client instance using `OPENAI_API_KEY`."""
     try:
         from openai import OpenAI  # type: ignore
     except Exception as e:  # pragma: no cover
@@ -40,11 +59,23 @@ def _openai_client():
 
 
 def _get_str(obj: Dict[str, Any], key: str) -> str:
+    """Helper: pull a string field out of a dict; otherwise return empty string."""
     v = obj.get(key)
     return v if isinstance(v, str) else ""
 
 
 def generate_plan(request: str, model: str) -> Plan:
+    """Generate a `Plan` from a natural-language request.
+
+    The model is instructed to return JSON only with keys:
+    - classification, sql, binds, explanation, risks, requires_confirmation
+
+    Returns:
+    - Plan: a normalized plan with `sql` stripped and without a trailing ';'.
+
+    Raises:
+    - RuntimeError: if OpenAI client is missing or the model returns non-JSON.
+    """
     client = _openai_client()
 
     # Prefer JSON mode when available to reduce invalid JSON responses.

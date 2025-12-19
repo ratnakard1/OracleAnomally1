@@ -1,3 +1,5 @@
+"""Package entrypoint for `python -m nldba_executor`."""
+
 from __future__ import annotations
 
 from .cli import main
