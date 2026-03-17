@@ -1,0 +1,30 @@
+# Oracle Database Initialization Parameters Template
+# Copy to init<SID>.ora and customize before database creation
+# Replace <SID>, <ORACLE_HOME>, <ORACLE_BASE> with your values
+
+db_name='<SID>'
+db_block_size=8192
+compatible=19.0.0
+
+# Memory
+memory_target=1G
+sga_target=800M
+pga_aggregate_target=200M
+
+# Control files
+control_files=('<ORACLE_BASE>/oradata/<SID>/control01.ctl', '<ORACLE_BASE>/oradata/<SID>/control02.ctl')
+
+# Redo log
+log_archive_dest_1='location=<ORACLE_BASE>/oradata/<SID>/archivelog'
+
+# Undo
+undo_management=AUTO
+undo_tablespace=UNDOTBS1
+
+# Character set
+nls_language=AMERICAN
+nls_territory=AMERICA
+
+# Processes and sessions
+processes=300
+sessions=335

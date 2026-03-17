@@ -1,0 +1,31 @@
+-- Oracle Database Creation Script
+-- Run as SYSDBA after: STARTUP NOMOUNT
+-- Prerequisites: init<SID>.ora configured, directories created
+
+-- IMPORTANT: Replace placeholders before execution:
+--   <SID>           - Database/instance name
+--   <ORACLE_BASE>   - Oracle base directory (e.g. /u01/app/oracle)
+--   <SYS_PASSWORD>  - SYS user password
+--   <SYSTEM_PASSWORD> - SYSTEM user password
+
+CREATE DATABASE <SID>
+  USER SYS IDENTIFIED BY <SYS_PASSWORD>
+  USER SYSTEM IDENTIFIED BY <SYSTEM_PASSWORD>
+  LOGFILE
+    GROUP 1 ('<ORACLE_BASE>/oradata/<SID>/redo01.log') SIZE 100M REUSE,
+    GROUP 2 ('<ORACLE_BASE>/oradata/<SID>/redo02.log') SIZE 100M REUSE,
+    GROUP 3 ('<ORACLE_BASE>/oradata/<SID>/redo03.log') SIZE 100M REUSE
+  MAXLOGFILES 16
+  MAXLOGMEMBERS 3
+  MAXDATAFILES 100
+  MAXINSTANCES 1
+  CHARACTER SET AL32UTF8
+  NATIONAL CHARACTER SET AL16UTF16
+  DATAFILE '<ORACLE_BASE>/oradata/<SID>/system01.dbf' SIZE 325M REUSE AUTOEXTEND ON NEXT 10M MAXSIZE UNLIMITED
+  SYSAUX DATAFILE '<ORACLE_BASE>/oradata/<SID>/sysaux01.dbf' SIZE 325M REUSE AUTOEXTEND ON NEXT 10M MAXSIZE UNLIMITED
+  DEFAULT TABLESPACE users
+    DATAFILE '<ORACLE_BASE>/oradata/<SID>/users01.dbf' SIZE 50M REUSE AUTOEXTEND ON
+  DEFAULT TEMPORARY TABLESPACE temp
+    TEMPFILE '<ORACLE_BASE>/oradata/<SID>/temp01.dbf' SIZE 100M REUSE
+  UNDO TABLESPACE undotbs1
+    DATAFILE '<ORACLE_BASE>/oradata/<SID>/undotbs01.dbf' SIZE 200M REUSE AUTOEXTEND ON;
